@@ -29,57 +29,75 @@
 
 <body class="loading">
     <div id="loader"></div>
-    <div class="nav">
-    <ul id="menu-menu" class="menu">
-        
-        <li class="pview menu-item menu-item-type-post_type menu-item-object-page">
-            <a href="/whoami/" title="Whoami" target="_blank" rel="noopener">Whoami</a>
-        </li>
-        
-        <li class="  menu-item menu-item-type-post_type menu-item-object-page">
-            <a href="https://github.com/marscc" title="Github" target="_blank" rel="noopener">Github</a>
-        </li>
-        
-    </ul>
-</div>
-
-<div id="container">
-    
-<div id="screen">
-    <div id="mark">
-        <div class="layer" data-depth="0.4">
-            <img src="/img/wallhaven-80053.jpg" id="cover" crossorigin="anonymous" width="1920" height="1080">
-        </div>
-    </div>
-    <div id="vibrant">
-        <svg viewBox="0 0 2880 1620" height="100%" preserveAspectRatio="xMaxYMax slice">
-            <polygon opacity="0.7" points="2000,1620 0,1620 0,0 600,0 "/>
-        </svg>
-        <div></div>
-    </div>
-    <div id="header">
+    <div id="single">
+    <div id="top" style="display: block;">
+    <div class="bar" style="width: 0;"></div>
+    <a class="icon-home image-icon" href="javascript:;"></a>
+    <div title="播放/暂停" class="icon-play"></div>
+    <h3 class="subtitle">千里之行，始于笔下</h3>
+    <div class="social">
+        <!--<div class="like-icon">-->
+            <!--<a href="javascript:;" class="likeThis active"><span class="icon-like"></span><span class="count">76</span></a>-->
+        <!--</div>-->
         <div>
-            <a class="image-logo" href="/"></a>
-            <div class="icon-menu switchmenu"></div>
+            <div class="share">
+                <a title="获取二维码" class="icon-scan" href="javascript:;"></a>
+            </div>
+            <div id="qr"></div>
         </div>
     </div>
-    
-    <div id="post0">
-        <p>七月 25, 2018</p>
-        <h2><a href="/2018/07/25/1/" title="千里之行，始于笔下" class="posttitle">千里之行，始于笔下</a></h2>
-        <p class="summary">静谧的夜，Mac里放着轻音乐，大脑思索着，像即将出发一样的旅行者一样，怎样开启写作之旅。  
-回想16年来北京的时...</p>
-    </div>
-    
+    <div class="scrollbar"></div>
 </div>
+    <div class="section">
+        <div class="article">
+    <div class='main'>
+        <h1 class="title">千里之行，始于笔下</h1>
+        <div class="stuff">
+            <span>七月 25, 2018</span>
+            
 
-    <div id="primary">
+        </div>
+        <div class="content markdown">
+            <p>静谧的夜，Mac里放着轻音乐，大脑思索着，像即将出发一样的旅行者一样，怎样开启写作之旅。  </p>
+<p>回想16年来北京的时候，当时上火车之前约好同学来车站接我，结果粗心大意的我忘带充电宝，等到北京站的时候急冲冲的冲进附近的网吧冲了半小时电，幸运最后同学等了很久也没抛弃我。两年半过去了，发现自己好了一点，小事有了规划，但大事还是缺乏规划。anyway，人总是会进步。</p>
+<p>两年半，经历人生第一次正正经经的异地恋，也是第一段恋爱，也是第一次分手。争吵、哄、分手、挽回、分手、好聚好散。</p>
+<p>两年半，第一份工作，在Qunar点亮了职场技能，结识了一群志同道合的同事，在经历他们每天耳边不停的吐嘲部门谁谁谁傻逼时，成功将“负能量”传染给了我，而这种“负能量”，正是大公司里一些不合理的现象导致自己不能理解，最终离职，Anyway，存在即合理，也许自己眼中认识了不合理却恰恰是合理。</p>
+<p>两年半，第二份工作，在AI最火的时候，来到范式，一家AI初创公司，在这里认识很多超厉害的同事，在近一年的时间里，技能越来越娴熟，思考问题的方式也越来越成熟。但也有不足的地方，万幸身边总会有好心的人提醒我补强哪方面。感谢遇到的每一个好心的同事。</p>
+<p>有个段子说程序员们的计划列表里总有一项学习英语，但从来没完成过。我希望我的博客不要像永远to do的英语学习。</p>
+<p>什么事都还是得定个目标，写博客不是目的，而是一种手段，希望通过这种手段，培养自己如下能力：</p>
+<ol>
+<li>聚合零散的碎片知识，构建自己的知识体系。</li>
+<li>锻炼文字组织能力</li>
+<li>培养自己的方法论</li>
+</ol>
+<p>flag立了，是时候行动了。</p>
+<p>​                                                                    </p>
+
+            <!--[if lt IE 9]><script>document.createElement('audio');</script><![endif]-->
+            <audio id="audio" loop="1" preload="auto" controls="controls" data-autoplay="false">
+                <source type="audio/mpeg" src="http://domain.com/awesome.mp3">
+            </audio>
+            
+        </div>
         
+    <div id='gitalk-container' class="comment link"
+        data-ae='false'
+        data-ci=''
+        data-cs=''
+        data-r=''
+        data-o=''
+        data-a=''
+        data-d='false'
+    >查看评论</div>
+
+
     </div>
     
 </div>
-<div id="preview"></div>
 
+
+    </div>
+</div>
 </body>
 <script src="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
 <script src="//lib.baomitu.com/jquery/1.8.3/jquery.min.js"></script>

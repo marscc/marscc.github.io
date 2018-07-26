@@ -1,0 +1,184 @@
+
+<!DOCTYPE html>
+<html lang="" class="loading">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>鲸落</title>
+
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="google" content="notranslate" />
+    <meta name="keywords" content="Marscc,"> 
+    <meta name="description" content="静谧的夜，Mac里放着轻音乐，大脑思索着，像即将出发一样的旅行者一样，怎样开启写作之旅。  
+回想16年来北京的时候，当时上火车之前约好同学来车站接我，结果粗心大意的我忘带充电宝，等到北京站的时候急,"> 
+    <meta name="author" content="Mars"> 
+    <link rel="alternative" href="atom.xml" title="鲸落" type="application/atom+xml"> 
+    <link rel="icon" href="/img/favicon.png"> 
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+    <link rel="stylesheet" href="/css/diaspora.css">
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <script>
+      (adsbygoogle = window.adsbygoogle || []).push({
+        google_ad_client: "ca-pub-8691406134231910",
+        enable_page_level_ads: true
+      });
+    </script>
+
+</head>
+
+<body class="loading">
+    <div id="loader"></div>
+    <div id="single">
+    <div id="top" style="display: block;">
+    <div class="bar" style="width: 0;"></div>
+    <a class="icon-home image-icon" href="javascript:;"></a>
+    <div title="播放/暂停" class="icon-play"></div>
+    <h3 class="subtitle">人生苦短，我用SQL</h3>
+    <div class="social">
+        <!--<div class="like-icon">-->
+            <!--<a href="javascript:;" class="likeThis active"><span class="icon-like"></span><span class="count">76</span></a>-->
+        <!--</div>-->
+        <div>
+            <div class="share">
+                <a title="获取二维码" class="icon-scan" href="javascript:;"></a>
+            </div>
+            <div id="qr"></div>
+        </div>
+    </div>
+    <div class="scrollbar"></div>
+</div>
+    <div class="section">
+        <div class="article">
+    <div class='main'>
+        <h1 class="title">人生苦短，我用SQL</h1>
+        <div class="stuff">
+            <span>七月 26, 2018</span>
+            
+  <ul class="post-tags-list"><li class="post-tags-list-item"><a class="post-tags-list-link" href="/tags/NoSQL/">NoSQL</a></li><li class="post-tags-list-item"><a class="post-tags-list-link" href="/tags/大数据/">大数据</a></li></ul>
+
+
+        </div>
+        <div class="content markdown">
+            <p><img src="/img/1_HMEoq1e2RNxSwiQo_RL6tw.gif" alt="1_HMEoq1e2RNxSwiQo_RL6tw"></p>
+<p>这是第一篇技术博客，从以往的经历中开始说起吧。</p>
+<p>在Qunar的时候，接手过W哥的一个活儿：给搜索结果页的结果排序，当时并没有用上现在流行的机器学习等技术，仅仅靠一些策略，离线计算各种分数最后汇总为每一个商品打一个分。当然这不是重点，重点是W哥的离线计算过程并没有使用任何分布式计算框架、也没有使用脚本，全量的数据仅靠的是几千行的SQL算分，可以说在Qunar，我见识到了“发挥到极致”的存储过程。你可以说在Mysql里做存储过程相比应用层写逻辑运行效率更高一些，但一个无法回避的问题是得为这一坨“存储过程”花很大的成本维护。</p>
+<p>以致于很长的时间里，我见到复杂的SQL就会本能的反感。那为什么还会去拥抱SQL呢。其实更准确的描述是：我更愿意选择支持SQL-Like查询语言的NoSQL数据库。</p>
+<p>那什么是NoSQL呢，看下维基百科的定义：</p>
+<blockquote>
+<p>A NoSQL (originally referring to “non SQL” or “non relational”)[1] database provides a mechanism for storage and retrieval of data that is modeled in means other than the tabular relations used in relational databases. Such databases have existed since the late 1960s, but did not obtain the “NoSQL” moniker until a surge of popularity in the early twenty-first century,[2] triggered by the needs of Web 2.0 companies.[3][4][5] NoSQL databases are increasingly used in big data and real-time web applications.[6] <strong>NoSQL systems are also sometimes called “Not only SQL” to emphasize that they may support SQL-like query languages.</strong></p>
+</blockquote>
+<p>提炼出来重点即是：NoSQL系统也被称作“Not only SQL”, 用来强调支持SQL-Like查询语言的特性。</p>
+<p>有人会有疑问，在HDFS上我完全可以用MapReduce去处理数据，可以使用Spark去处理数据，为什么非要把关系型数据库那一套查询语言搬到这来呢。</p>
+<p>为了回答这个问题，我们回顾一下SQL的历史（截取了我认为比较重要的三段时间）</p>
+<ol>
+<li>20世纪70年代初关系型数据库诞生。IBM研究院的Donald Chamberlin和Raymond Boyce两位博士意识到“计算机行业的成功很大程度上依赖于培养一种除了训练有素的计算机专家以外的用户“。为了解决查询语言过度复杂，于是他们重新设计了一种新的语言SQL，用他们自己的话来说：“这种语言用户使用更容易，不需要再参加数学或计算机程序方面的正规培训。”，毫无疑问，SQL在1974年被引入后一直成为关系型数据库的最主要语言。</li>
+</ol>
+<p><img src="/img/0_sql.png" alt="0_sql"></p>
+<ol start="2">
+<li>1989年万维网出现，在随后的几十年里，随着互联网不断发展带来的数据指数级增长，关系型数据库逐渐无法应对大的负载压力。此时NoSQL运动开始兴起，Google发布MapReduce（2004年）和BigTable（2006年），Amazon发布了Dynamo（2007年），这些开创性的论文引导了一系列非关系型数据库的产生，包括Hadoop（2006）、Cassandra（2008）、MongoDB（2009）。NoSQL比这些作者想象的更受到社区的欢迎，一切看起来很美好是不是？问题随后出现了，开发者发现了不用SQL的局限性，每个NoSQL数据库都提供自己独特的查询语言，这意味着：要学习更多的语言，将这些数据库连接到应用程序的难度增加，导致大量胶水代码，缺乏第三方生态系统，要求企业必须开发自己的操作和可视化工具。(社区中有一些人比如DeWitt和Stonebraker在早期就看到了这些问题，经过时间的实战检验，越来越多的开发者也看到了这些问题)。</li>
+<li>经历了黎明前的黑暗，社区终于选择拥抱SQL，此时的NoSQL已经变成了“不仅仅是SQL“，首先是Hadoop开始支持SQL接口，然后Google在第一篇Spanner论文中揭示这是基于SQL的查询语言，可以将一份数据复制到全球范围的多个数据中心，并保证数据的一致性，从而开创了可跨地理复制的SQL界面的数据库。而2017 SIGMOD会议中第二篇Spanner论文-“Spanner：成为一个SQL系统”将SQL的能力进一步加强。同年，Kafka Summit大会上Confluent宣布Kafka新的里程碑：KSQL，开启了SQL在流式数据的应用。</li>
+</ol>
+<p>技术演进离不开实际需求的推动，经过社区的开发者们一步步实战，SQL终于被证明是NoSQL系统甚至是NewSQL系统中必不可少的交互语言，也可能未来会成为唯一的语言。（如果某一天第四代语言表达能力足够强）</p>
+<p>SQL作为广大人民的选择，不是没有道理的。</p>
+<p>一. SQL作为第四代语言，学习门槛降更低，应用范围更广。</p>
+<p><img src="/img/generalation_language.png" alt="generalation_language"></p>
+<blockquote>
+<p>SQL is the only widely used 4GL in commercial use today. Artificial intelligence languages are also classified as 4GL.</p>
+</blockquote>
+<p>二. SQL接口的通用性正让其成为数据分析中的“窄腰”</p>
+<p>在计算机网络中有一个概念叫“窄腰“（narrow waist），从下图中可以看到传输层和应用层的协议各式各样，但网络层只有IP协议，这样的设计是使得因特网得一成长和进化长达40年的重要原因之一。</p>
+<p><img src="/img/0_qm2HH4Ob3YnH3C3f.png" alt="0_qm2HH4Ob3YnH3C3f"></p>
+<p>像网络一样，我们有一个复杂的堆栈，底层的基础设施和顶部的应用程序（当然还有一层即我们自己）。通常我们会编写了大量的胶水代码，使此堆栈工作。但是胶水代码可能很脆弱：需要维护和贴合。我们需要的是一个公共接口，允许这个堆栈的各个部分相互通信。这个行业已经标准化了。它能让不同层级之间的通信阻碍降到最小。</p>
+<p><img src="/img/342-1508221647870.png" alt="342-1508221647870"></p>
+<p>这就是SQL的力量。和IP一样，SQL也是一个公共接口。</p>
+<p>三. 或许是最重要的，培训大家学习无数的新语言的成本的是巨大的，而不仅仅是统一标准的重要性。</p>
+
+            <!--[if lt IE 9]><script>document.createElement('audio');</script><![endif]-->
+            <audio id="audio" loop="1" preload="auto" controls="controls" data-autoplay="false">
+                <source type="audio/mpeg" src="http://domain.com/awesome.mp3">
+            </audio>
+            
+        </div>
+        
+    <div id='gitalk-container' class="comment link"
+        data-ae='false'
+        data-ci=''
+        data-cs=''
+        data-r=''
+        data-o=''
+        data-a=''
+        data-d='false'
+    >查看评论</div>
+
+
+    </div>
+    
+</div>
+
+
+    </div>
+</div>
+</body>
+<script src="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+<script src="//lib.baomitu.com/jquery/1.8.3/jquery.min.js"></script>
+<script src="/js/plugin.js"></script>
+<script src="/js/diaspora.js"></script>
+<link rel="stylesheet" href="/photoswipe/photoswipe.css">
+<link rel="stylesheet" href="/photoswipe/default-skin/default-skin.css">
+<script src="/photoswipe/photoswipe.min.js"></script>
+<script src="/photoswipe/photoswipe-ui-default.min.js"></script>
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+            <div class="pswp__top-bar">
+                <!--  Controls are self-explanatory. Order can be changed. -->
+                <div class="pswp__counter"></div>
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                      <div class="pswp__preloader__cut">
+                        <div class="pswp__preloader__donut"></div>
+                      </div>
+                    </div>
+                </div>
+            </div>
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div> 
+            </div>
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+</html>

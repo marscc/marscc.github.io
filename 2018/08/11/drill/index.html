@@ -1,0 +1,178 @@
+
+<!DOCTYPE html>
+<html lang="" class="loading">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>鲸落</title>
+
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="google" content="notranslate" />
+    <meta name="keywords" content="Marscc,"> 
+    <meta name="description" content="
+这是第一篇技术博客，从以往的经历中开始说起吧。
+在Qunar的时候，接手过W哥的一个活儿：给搜索结果页的结果排序，当时并没有用上现在流行的机器学习等技术，仅仅靠一些策略，离线计算各种分数最后汇总为,"> 
+    <meta name="author" content="Mars"> 
+    <link rel="alternative" href="atom.xml" title="鲸落" type="application/atom+xml"> 
+    <link rel="icon" href="/img/favicon.png"> 
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+    <link rel="stylesheet" href="/css/diaspora.css">
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <script>
+      (adsbygoogle = window.adsbygoogle || []).push({
+        google_ad_client: "ca-pub-8691406134231910",
+        enable_page_level_ads: true
+      });
+    </script>
+
+</head>
+
+<body class="loading">
+    <div id="loader"></div>
+    <div id="single">
+    <div id="top" style="display: block;">
+    <div class="bar" style="width: 0;"></div>
+    <a class="icon-home image-icon" href="javascript:;"></a>
+    <div title="播放/暂停" class="icon-play"></div>
+    <h3 class="subtitle">Drill在AI场景下的应用</h3>
+    <div class="social">
+        <!--<div class="like-icon">-->
+            <!--<a href="javascript:;" class="likeThis active"><span class="icon-like"></span><span class="count">76</span></a>-->
+        <!--</div>-->
+        <div>
+            <div class="share">
+                <a title="获取二维码" class="icon-scan" href="javascript:;"></a>
+            </div>
+            <div id="qr"></div>
+        </div>
+    </div>
+    <div class="scrollbar"></div>
+</div>
+    <div class="section">
+        <div class="article">
+    <div class='main'>
+        <h1 class="title">Drill在AI场景下的应用</h1>
+        <div class="stuff">
+            <span>八月 11, 2018</span>
+            
+  <ul class="post-tags-list"><li class="post-tags-list-item"><a class="post-tags-list-link" href="/tags/SQL/">SQL</a></li><li class="post-tags-list-item"><a class="post-tags-list-link" href="/tags/大数据/">大数据</a></li></ul>
+
+
+        </div>
+        <div class="content markdown">
+            <p>写在前面：上周偷了懒没有更新博客，说好的坚持写作啪啪打脸，发现和懒惰做斗争真是一项艰巨又光荣的任务。</p>
+<p>上一篇文章算一篇科普文章，讲述了SQL on Hadoop已经成为趋势，甚至SQL on MQ也开始出现。本片文章主要讲述SQL on Hadoop工具Drill在AI场景下的应用。</p>
+<p>我为什么用Drill？</p>
+<p>其实最开始在做技术调研的时候，我们并非使用Drill，而是现在比较流行的Hive。但随着在使用的过程中，一些问题渐渐显露出来，变得无法满足现在的需求。主要的问题出现在一下两点：</p>
+<ol>
+<li>当数据的字段有变化时，需要不断调整表的schema，当这种变化变的频繁时，需要付出额外的精力去做schema的管理，比如如何兼容不同格式的数据。</li>
+<li>hive底层使用的Map Reduce去做计算，由于MR的低效，导致在数据量稍大的表上执行复杂的查询时耗时很久。</li>
+</ol>
+<p>为了解决以上两点，我做了大量调研，最终采用Drill来作为我们组的OLAP工具，经过了半年的踩坑，已在部门内被算法科学家，产品运营和研发大规模使用。</p>
+<p>先介绍下Drill吧。</p>
+<p>官网对Drill的介绍很简洁：</p>
+<blockquote>
+<p>Apache Drill: Schema-free SQL Query Engine for Hadoop, NoSQL and Cloud Storage</p>
+</blockquote>
+<p>其中的关键信息时Schema-free，接下来介绍了三个特性：</p>
+<blockquote>
+<p>Agility: Get faster insights without the overhead (data loading, schema creation and maintenance, transformations, etc.)<br>Flexibility: Analyze the multi-structured and nested data in non-relational datastores directly without transforming or restricting the data<br>Familiarity: Leverage your existing SQL skillsets and BI tools including Tableau, Qlikview, MicroStrat</p>
+</blockquote>
+<p>即 </p>
+<p>1.敏捷： 基本不需要成本即可上手使用</p>
+<p>2.灵活：支持分析非关系型数据库中的多种结构和嵌套的数据，不需要对数据进行转换和约束。</p>
+<p>3.熟悉：能够和当先流行的SQL技能和BI工具结合。</p>
+<p>另外Drill使用了MPP架构，本质上比Hive的效率要好很多。</p>
+<p>好了让我一步步从需求开始来介绍如何使用drill的。</p>
+<p>我们数据的格式：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&#123;<span class="attr">"logType"</span>:<span class="string">"request"</span>,<span class="attr">"actionTime"</span>:<span class="number">1533979550236</span>,<span class="attr">"pubIp"</span>:<span class="string">"0.0.0.0"</span>,<span class="attr">"clientToken"</span>:<span class="string">"b8298c76d204483d9501a583f047ea71"</span>,<span class="attr">"ip"</span>:<span class="string">"0.0.0.0"</span>,<span class="attr">"sceneName"</span>:<span class="string">"default"</span>,<span class="attr">"businessId"</span>:<span class="string">"80"</span>,<span class="attr">"businessToken"</span>:<span class="string">"b8298c76d204483d9501a583f047ea71"</span>,<span class="attr">"serviceName"</span>:<span class="string">"action"</span>,<span class="attr">"userId"</span>:<span class="string">"8f51a10793e4eeba9bab44082abe6737e1f6"</span>,<span class="attr">"contextExist"</span>:<span class="string">"0"</span>,<span class="attr">"logWriteTime"</span>:<span class="number">1533979551521</span>,<span class="attr">"itemId"</span>:<span class="string">"1_0_12679538_1554_1533777240"</span>,<span class="attr">"requestID"</span>:<span class="string">"WHZVfsUu"</span>,<span class="attr">"sceneId"</span>:<span class="string">"635"</span>,<span class="attr">"action"</span>:<span class="string">"show"</span>,<span class="attr">"itemSetId"</span>:<span class="string">"360"</span>,<span class="attr">"logWriteTimeHuman"</span>:<span class="string">"2018-08-11 17:25:51"</span>&#125;</span><br><span class="line">&#123;<span class="attr">"logType"</span>:<span class="string">"request"</span>,<span class="attr">"actionTime"</span>:<span class="number">1533979550682</span>,<span class="attr">"pubIp"</span>:<span class="string">"0.0.0.0"</span>,<span class="attr">"clientToken"</span>:<span class="string">"b8298c76d204483d9501a583f047ea71"</span>,<span class="attr">"ip"</span>:<span class="string">"0.0.0.0"</span>,<span class="attr">"sceneName"</span>:<span class="string">"default"</span>,<span class="attr">"channel"</span>:<span class="string">"pf4crash"</span>,<span class="attr">"businessId"</span>:<span class="string">"80"</span>,<span class="attr">"businessToken"</span>:<span class="string">"b8298c76d204483d9501a583f047ea71"</span>,<span class="attr">"serviceName"</span>:<span class="string">"action"</span>,<span class="attr">"userId"</span>:<span class="string">"0182373d7f388a861b4082e0dce38e9d7988"</span>,<span class="attr">"contextExist"</span>:<span class="string">"1"</span>,<span class="attr">"logWriteTime"</span>:<span class="number">1533979552558</span>,<span class="attr">"itemId"</span>:<span class="string">"1_0_12633133_138_1533201660"</span>,<span class="attr">"requestID"</span>:<span class="string">"drx4MIeG"</span>,<span class="attr">"sceneId"</span>:<span class="string">"635"</span>,<span class="attr">"action"</span>:<span class="string">"show"</span>,<span class="attr">"itemSetId"</span>:<span class="string">"360"</span>,<span class="attr">"logWriteTimeHuman"</span>:<span class="string">"2018-08-11 17:25:52"</span>&#125;</span><br><span class="line">&#123;<span class="attr">"logType"</span>:<span class="string">"request"</span>,<span class="attr">"actionTime"</span>:<span class="number">1533979551348</span>,<span class="attr">"pubIp"</span>:<span class="string">"0.0.0.0"</span>,<span class="attr">"clientToken"</span>:<span class="string">"b8298c76d204483d9501a583f047ea71"</span>,<span class="attr">"ip"</span>:<span class="string">"0.0.0.0"</span>,<span class="attr">"sceneName"</span>:<span class="string">"default"</span>,<span class="attr">"businessId"</span>:<span class="string">"80"</span>,<span class="attr">"businessToken"</span>:<span class="string">"b8298c76d204483d9501a583f047ea71"</span>,<span class="attr">"serviceName"</span>:<span class="string">"action"</span>,<span class="attr">"userId"</span>:<span class="string">"8f51a10793e4eeba9bab44082abe6737e1f6"</span>,<span class="attr">"contextExist"</span>:<span class="string">"0"</span>,<span class="attr">"logWriteTime"</span>:<span class="number">1533979552923</span>,<span class="attr">"itemId"</span>:<span class="string">"1_0_12679145_138_1533774840"</span>,<span class="attr">"requestID"</span>:<span class="string">"WHZVfsUu"</span>,<span class="attr">"sceneId"</span>:<span class="string">"635"</span>,<span class="attr">"action"</span>:<span class="string">"show"</span>,<span class="attr">"itemSetId"</span>:<span class="string">"360"</span>,<span class="attr">"logWriteTimeHuman"</span>:<span class="string">"2018-08-11 17:25:52"</span>&#125;</span><br></pre></td></tr></table></figure>
+
+            <!--[if lt IE 9]><script>document.createElement('audio');</script><![endif]-->
+            <audio id="audio" loop="1" preload="auto" controls="controls" data-autoplay="false">
+                <source type="audio/mpeg" src="http://domain.com/awesome.mp3">
+            </audio>
+            
+        </div>
+        
+    <div id='gitalk-container' class="comment link"
+        data-ae='true'
+        data-ci='d2fe48b53240c7f47801'
+        data-cs='c005b109fce4729b517ffa29d8f88a45195994c0'
+        data-r='marscc.github.io'
+        data-o='marscc'
+        data-a='marscc'
+        data-d='false'
+    >查看评论</div>
+
+
+    </div>
+    
+</div>
+
+
+    </div>
+</div>
+</body>
+<script src="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+<script src="//lib.baomitu.com/jquery/1.8.3/jquery.min.js"></script>
+<script src="/js/plugin.js"></script>
+<script src="/js/diaspora.js"></script>
+<link rel="stylesheet" href="/photoswipe/photoswipe.css">
+<link rel="stylesheet" href="/photoswipe/default-skin/default-skin.css">
+<script src="/photoswipe/photoswipe.min.js"></script>
+<script src="/photoswipe/photoswipe-ui-default.min.js"></script>
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+            <div class="pswp__top-bar">
+                <!--  Controls are self-explanatory. Order can be changed. -->
+                <div class="pswp__counter"></div>
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                      <div class="pswp__preloader__cut">
+                        <div class="pswp__preloader__donut"></div>
+                      </div>
+                    </div>
+                </div>
+            </div>
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div> 
+            </div>
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+</html>

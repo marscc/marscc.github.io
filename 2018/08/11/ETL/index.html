@@ -1,0 +1,175 @@
+
+<!DOCTYPE html>
+<html lang="" class="loading">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>鲸落</title>
+
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="google" content="notranslate" />
+    <meta name="keywords" content="Marscc,"> 
+    <meta name="description" content="
+这是第一篇技术博客，从以往的经历中开始说起吧。
+在Qunar的时候，接手过W哥的一个活儿：给搜索结果页的结果排序，当时并没有用上现在流行的机器学习等技术，仅仅靠一些策略，离线计算各种分数最后汇总为,"> 
+    <meta name="author" content="Mars"> 
+    <link rel="alternative" href="atom.xml" title="鲸落" type="application/atom+xml"> 
+    <link rel="icon" href="/img/favicon.png"> 
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+    <link rel="stylesheet" href="/css/diaspora.css">
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <script>
+      (adsbygoogle = window.adsbygoogle || []).push({
+        google_ad_client: "ca-pub-8691406134231910",
+        enable_page_level_ads: true
+      });
+    </script>
+
+</head>
+
+<body class="loading">
+    <div id="loader"></div>
+    <div id="single">
+    <div id="top" style="display: block;">
+    <div class="bar" style="width: 0;"></div>
+    <a class="icon-home image-icon" href="javascript:;"></a>
+    <div title="播放/暂停" class="icon-play"></div>
+    <h3 class="subtitle">大数据平台之ETL部分</h3>
+    <div class="social">
+        <!--<div class="like-icon">-->
+            <!--<a href="javascript:;" class="likeThis active"><span class="icon-like"></span><span class="count">76</span></a>-->
+        <!--</div>-->
+        <div>
+            <div class="share">
+                <a title="获取二维码" class="icon-scan" href="javascript:;"></a>
+            </div>
+            <div id="qr"></div>
+        </div>
+    </div>
+    <div class="scrollbar"></div>
+</div>
+    <div class="section">
+        <div class="article">
+    <div class='main'>
+        <h1 class="title">大数据平台之ETL部分</h1>
+        <div class="stuff">
+            <span>八月 11, 2018</span>
+            
+  <ul class="post-tags-list"><li class="post-tags-list-item"><a class="post-tags-list-link" href="/tags/大数据平台/">大数据平台</a></li><li class="post-tags-list-item"><a class="post-tags-list-link" href="/tags/推荐系统/">推荐系统</a></li></ul>
+
+
+        </div>
+        <div class="content markdown">
+            <blockquote>
+<p><strong>ETL</strong>，是英文Extract-Transform-Load的缩写，用来描述将数据从来源端经过萃取（extract）、转置（transform）、加载（load）至目的端的过程。<strong>ETL</strong>一词较常用在<a href="https://zh.wikipedia.org/wiki/%E8%B3%87%E6%96%99%E5%80%89%E5%84%B2" target="_blank" rel="noopener">数据仓库</a>，但其对象并不限于<a href="https://zh.wikipedia.org/wiki/%E8%B3%87%E6%96%99%E5%80%89%E5%84%B2" target="_blank" rel="noopener">数据仓库</a>。</p>
+</blockquote>
+<p>有一个说法是算法科学家会花70%的时间用在数据处理上，而数据处理最琐碎的部分也是在Transform部分，而对于我们当前业务来说，这算是一种解放，因为我们对基础数据格式做了严格定义，这使得我们花费相当少量的时间去做日志清洗。通常来说，这在大公司是很难做到的。因为各个业务的标准都不一样，推动他们修改成统一的格式需要花费巨大的成本。所以一个经验是在业务初期，大数据人员就应该主动参与数据标准和规范的制定，避免把坑留到后面。</p>
+<p>本篇文章作为大数据平台的一部分，主要讨论推荐业务大数据的ETL层是如何建立的。先放张图，</p>
+<p><img src="/img/数据平台.png" alt="数据平台"></p>
+<p>0.1版本中，客户将行为日志（展示、点击、收藏等）通过POST请求上传到我们的服务器，具体来说由行为日志接收服务负责接收客户传过来的行为并进行校验后持久化到本地磁盘，在该物理机上，我们还会布置一个flume agent，用于将磁盘上的日志实时传输到HDFS集群。0.1版本的优点在于简单，但是有两个问题暴露出来：1. 由于简单，所以其可靠性极差，如果挂掉需要手工重启，另外缺乏有效的监控。2.另外在物理机资源紧张的情况下，flume agent会占用内存，会对线上服务产生影响。</p>
+<p>为了提高可靠性，从v0.2版本开始将flume-agent和action服务一起打到镜像中，部署在docker里，这样由K8S来同于管理，省去了很多手工维护的成本。将其但是随着客户越来越多，每个客户传过来的行为千差万别（比如feed流推荐传过来的是文章展示、点击、收藏、阅读时长等，视屏网站传过来的是视频播放，视频收藏，而社交推荐网站传过来的是喜欢、不喜欢等），受限于客户的技术水平，很多小客户对接接口是时间甚至要花费好几周。为了解决这个问题，v1.0版本将行为日志的上传交由sdk去完成，这样需要什么字段，全由我们自己控制，极大的降低了对接成本。</p>
+<p>v1.0版本通过sdk收集用户行为，然后发往后端，后端接收到日志之后落盘的同时将该条日志发到Kafka消息队列，和之前相比，不需要flume再从硬盘上采集，流程上节省了一步，提高了日志传输的效率，同时接入Kafka更方便以后扩展流式应用，Kafka消费端会有Flume将日志输出到HDFS。</p>
+<p>除了行为日志外，我们还需要收集推荐结果日志，推荐日志中包含的信息包含userID，文章信息，文章信息存放在mysql中，当我们将行为日志和推荐结果日志按traceID进行拼接，那为什么不直接将行为日志和物料库直接关联呢，需要对物料库数据做冗余呢，其实物料有可能会更新，如果不给当时的物品信息，物品特征，用户实时特征做快照的话，建模时会发生“时间穿越”的问题。</p>
+<blockquote>
+<p>用未来的数据训练的模型去预测过去发生的事，称之为时间穿越。</p>
+<p><em>比如，假设样本数据包含了7月份和8月份的用户行为数据，按照随机拆分，划分的结果将为训练集和测试集中都可能含有7月 和8月的数据，这样的数据在训练时没有问题，但是在预测评估时，会导致数据指标优于实际情况，例如，若真实的AUC应该 是0.7，那么在这样的数据集上评估出的结果就会大于0.7。</em></p>
+</blockquote>
+<p>其中推荐结果日志格式如下：</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">"reqEndMillis"</span>: <span class="number">1534438801477</span>,</span><br><span class="line">  <span class="attr">"qs"</span>: <span class="string">"requestID=EbqIG2QC&amp;userID=1qosEPzXZ&amp;sceneID=1"</span>,</span><br><span class="line">  <span class="attr">"req"</span>: <span class="string">"&#123;\"itemID\":\"50347149\",\"uuid_tt_dd\":\"10_34194217130-1534438765984-908188\"&#125;"</span>,</span><br><span class="line">  <span class="attr">"result"</span>: [</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="attr">"item"</span>: &#123;</span><br><span class="line">        <span class="attr">"publisher_id"</span>: <span class="string">""</span>,</span><br><span class="line">        <span class="attr">"title"</span>: <span class="string">"咦？八周学会&lt;span style=\"color:#ca0c16;\"&gt;区块链开发&lt;/span&gt;，程序员&lt;span style=\"color:#ca0c16;\"&gt;转行&lt;/span&gt;利器！"</span>,</span><br><span class="line">        <span class="attr">"content"</span>: <span class="string">"区块链DApp开发学习路线图，月薪4万很轻松"</span>,</span><br><span class="line">        <span class="attr">"publish_time"</span>: <span class="string">"2018-08-16 16:58:00"</span>,</span><br><span class="line">        <span class="attr">"tag"</span>: <span class="string">"区块链;比特币;以太坊;区块链开发;加密猫;智能合约;私链;数字签名"</span>,</span><br><span class="line">        <span class="attr">"item_id"</span>: <span class="string">"140"</span></span><br><span class="line">      &#125;,</span><br><span class="line">      <span class="attr">"context"</span>: &#123;</span><br><span class="line">        <span class="attr">"channel"</span>: <span class="string">"channe1"</span></span><br><span class="line">      &#125;</span><br><span class="line">    &#125;,</span><br><span class="line">    &#123;</span><br><span class="line">      <span class="attr">"item"</span>: &#123;</span><br><span class="line">        <span class="attr">"publisher_id"</span>: <span class="string">""</span>,</span><br><span class="line">        <span class="attr">"title"</span>: <span class="string">"厉害了！三个月如何学会Python&lt;span style=\"color:#ca0c16;\"&gt;薪资&lt;/span&gt;翻倍"</span>,</span><br><span class="line">        <span class="attr">"content"</span>: <span class="string">"如何从8K提至20K月薪，你要掌握学习那些技能"</span>,</span><br><span class="line">        <span class="attr">"publish_time"</span>: <span class="string">"2018-08-16 16:57:10"</span>,</span><br><span class="line">        <span class="attr">"tag"</span>: <span class="string">"Python;python工程师;人工智能 ;Python爬虫技术;Python自动化运维;Python数据挖掘;图像处理"</span>,</span><br><span class="line">        <span class="attr">"item_id"</span>: <span class="string">"160"</span></span><br><span class="line">      &#125;,</span><br><span class="line">      <span class="attr">"context"</span>: &#123;</span><br><span class="line">        <span class="attr">"channel"</span>: <span class="string">"channel2"</span></span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  ],</span><br><span class="line">  <span class="attr">"uss"</span>: &#123;</span><br><span class="line">    <span class="attr">"user_interest_channel"</span>: <span class="string">"***"</span>,</span><br><span class="line">    <span class="attr">"user_interest_category_v1"</span>: <span class="string">"***"</span>,</span><br><span class="line">    <span class="attr">"user_interest_itemId"</span>: <span class="string">"***"</span>,</span><br><span class="line">    <span class="attr">"user_interest_tag"</span>: <span class="string">"***"</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>简单介绍下上面日志里的字段含义：</p>
+<p>result：推荐结果字段，list结构，每一项代表一条推荐项，里面包含两项，item信息和context信息，context信息主要是方便统计，uss字段指用户的实时特征。</p>
+<p>那怎样把这条日志清洗为标准的格式呢？将推荐项拆出来，已经将uss信息写到每一条推荐项里。使用Kafka Streams很方便就能处理：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//Java code</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">CleansingApplication</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;</span><br><span class="line">        Properties settings = <span class="keyword">new</span> Properties();</span><br><span class="line">        settings.put(StreamsConfig.APPLICATION_ID_CONFIG, <span class="string">"clean"</span>);</span><br><span class="line">        settings.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, <span class="string">"kafka-cluster"</span>);</span><br><span class="line">        settings.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, <span class="string">"latest"</span>);</span><br><span class="line">        settings.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass());</span><br><span class="line">        settings.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass());</span><br><span class="line">        settings.put(StreamsConfig.DEFAULT_TIMESTAMP_EXTRACTOR_CLASS_CONFIG, WallclockTimestampExtractor.class);</span><br><span class="line">        settings.put(StreamsConfig.REQUEST_TIMEOUT_MS_CONFIG, <span class="number">1000</span> * <span class="number">60</span> * <span class="number">5</span>); </span><br><span class="line">        StreamsConfig config = <span class="keyword">new</span> StreamsConfig(settings);</span><br><span class="line">        StreamsBuilder builder = <span class="keyword">new</span> StreamsBuilder();</span><br><span class="line">        KStream&lt;String, String&gt; recommendLog = builder.stream(<span class="string">"raw_recom_log"</span>);<span class="comment">//原始日志所在的topic</span></span><br><span class="line">        JsonParser jsonparser = <span class="keyword">new</span> JsonParser();</span><br><span class="line">        recommendLog.flatMap((k, v) -&gt; &#123;</span><br><span class="line">            List&lt;KeyValue&lt;String, String&gt;&gt; tmp = <span class="keyword">new</span> ArrayList&lt;&gt;();</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                JsonObject jsonObject = jsonparser.parse(v).getAsJsonObject();</span><br><span class="line">                JsonArray result = jsonObject.getAsJsonArray(<span class="string">"result"</span>);</span><br><span class="line">                JsonObject uss = jsonObject.getAsJsonObject(<span class="string">"uss"</span>);</span><br><span class="line">                <span class="keyword">for</span> (Object o : result) &#123;</span><br><span class="line">                    JsonObject composedObj = (JsonObject) o;</span><br><span class="line">                    JsonObject itemObj = composedObj.get(<span class="string">"item"</span>).getAsJsonObject();</span><br><span class="line">                    JsonObject contextObj = composedObj.get(<span class="string">"context"</span>).getAsJsonObject();</span><br><span class="line">                    Set&lt;String&gt; itemObjKeySet = itemObj.keySet();</span><br><span class="line">                    <span class="comment">//添加context里的字段</span></span><br><span class="line">                    <span class="keyword">for</span> (String key : contextObj.keySet()) &#123;</span><br><span class="line">                        <span class="keyword">if</span> (!itemObjKeySet.contains(key)) &#123;</span><br><span class="line">                            itemObj.add(key, contextObj.get(key));</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;</span><br><span class="line">                    <span class="comment">//添加uss里的字段</span></span><br><span class="line">                    <span class="keyword">for</span> (String key : uss.keySet()) &#123;</span><br><span class="line">                        itemObj.add(key, uss.get(key));</span><br><span class="line">                    &#125;</span><br><span class="line">                    itemObj.add(<span class="string">"reqEndMillis"</span>, jsonObject.get(<span class="string">"reqEndMillis"</span>));</span><br><span class="line">                    String qs = jsonObject.get(<span class="string">"qs"</span>).getAsString();</span><br><span class="line">                    Map&lt;String, String&gt; qsTokensMap = Splitter.on(<span class="string">"&amp;"</span>).withKeyValueSeparator(<span class="string">"="</span>).split(qs);</span><br><span class="line">                    itemObj.addProperty(<span class="string">"userId"</span>, qsTokensMap.get(<span class="string">"userID"</span>));</span><br><span class="line">                    itemObj.add(<span class="string">"qs"</span>, jsonObject.get(<span class="string">"qs"</span>));</span><br><span class="line">                    tmp.add(<span class="keyword">new</span> KeyValue&lt;&gt;(k, itemObj.toString()));</span><br><span class="line">                &#125;</span><br><span class="line">            &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">                System.out.println(e.getMessage());</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">return</span> tmp;</span><br><span class="line">        &#125;).to(<span class="string">"standard_recom_log"</span>); <span class="comment">//清洗完毕之后的topic</span></span><br><span class="line"></span><br><span class="line">        KafkaStreams streams = <span class="keyword">new</span> KafkaStreams(builder.build(), config);</span><br><span class="line">        streams.start();</span><br><span class="line">        Runtime.getRuntime().addShutdownHook(<span class="keyword">new</span> Thread(<span class="keyword">new</span> Runnable() &#123;</span><br><span class="line">            <span class="meta">@Override</span></span><br><span class="line">            <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">run</span><span class="params">()</span> </span>&#123;</span><br><span class="line">                streams.close();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;));</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>当数据清洗完毕之后，数据重新导入到新的topic，接着可以使用flume作为kafka-hdfs-connector的将数据同步到HDFS上，Flume通过Interceptors很容易控制的从日志中提取相关字段作为hdfs存储路径，比如：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">#-------- timestamp interceptor 将event time提取出来-----------------</span><br><span class="line">agent.sources.kafkaSource.interceptors = i1 i2 i3</span><br><span class="line">agent.sources.kafkaSource.interceptors.i1.type = regex_extractor</span><br><span class="line">agent.sources.kafkaSource.interceptors.i1.regex = \"logWriteTime\":(\\d+)</span><br><span class="line">agent.sources.kafkaSource.interceptors.i1.serializers = s1</span><br><span class="line">agent.sources.kafkaSource.interceptors.i1.serializers.s1.name = timestamp</span><br><span class="line">agent.sources.kafkaSource.interceptors.i2.type = regex_extractor</span><br><span class="line">agent.sources.kafkaSource.interceptors.i2.regex = \"sceneId\":\"(.+?)\"</span><br><span class="line">agent.sources.kafkaSource.interceptors.i2.serializers = s2</span><br><span class="line">agent.sources.kafkaSource.interceptors.i2.serializers.s2.name = sceneId</span><br><span class="line">agent.sources.kafkaSource.interceptors.i3.type = regex_extractor</span><br><span class="line">agent.sources.kafkaSource.interceptors.i3.regex = \"businessId\":\"(.+?)\"</span><br><span class="line">agent.sources.kafkaSource.interceptors.i3.serializers = s3</span><br><span class="line">agent.sources.kafkaSource.interceptors.i3.serializers.s3.name = businessId</span><br><span class="line"></span><br><span class="line">agent.sinks.hdfsSink.type = hdfs</span><br><span class="line">agent.sinks.hdfsSink.hdfs.path = hdfs://hdp01:8020/recom/action/%&#123;businessId&#125;/%&#123;sceneId&#125;/%Y%m%d</span><br></pre></td></tr></table></figure>
+<p>这里需要注意的是时间的提取只支持毫秒级Unix时间戳，如果时间是其他格式的话，比如nginx日志中2017-06-27 09:08:01这种格式的时间，可以参考<a href="http://shzhangji.com/blog/2017/08/05/how-to-extract-event-time-in-apache-flume/" target="_blank" rel="noopener">这篇文章</a></p>
+
+            <!--[if lt IE 9]><script>document.createElement('audio');</script><![endif]-->
+            <audio id="audio" loop="1" preload="auto" controls="controls" data-autoplay="false">
+                <source type="audio/mpeg" src="http://domain.com/awesome.mp3">
+            </audio>
+            
+        </div>
+        
+    <div id='gitalk-container' class="comment link"
+        data-ae='true'
+        data-ci='d2fe48b53240c7f47801'
+        data-cs='c005b109fce4729b517ffa29d8f88a45195994c0'
+        data-r='marscc.github.io'
+        data-o='marscc'
+        data-a='marscc'
+        data-d='false'
+    >查看评论</div>
+
+
+    </div>
+    
+</div>
+
+
+    </div>
+</div>
+</body>
+<script src="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+<script src="//lib.baomitu.com/jquery/1.8.3/jquery.min.js"></script>
+<script src="/js/plugin.js"></script>
+<script src="/js/diaspora.js"></script>
+<link rel="stylesheet" href="/photoswipe/photoswipe.css">
+<link rel="stylesheet" href="/photoswipe/default-skin/default-skin.css">
+<script src="/photoswipe/photoswipe.min.js"></script>
+<script src="/photoswipe/photoswipe-ui-default.min.js"></script>
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+            <div class="pswp__top-bar">
+                <!--  Controls are self-explanatory. Order can be changed. -->
+                <div class="pswp__counter"></div>
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                      <div class="pswp__preloader__cut">
+                        <div class="pswp__preloader__donut"></div>
+                      </div>
+                    </div>
+                </div>
+            </div>
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div> 
+            </div>
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+</html>

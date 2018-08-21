@@ -24,7 +24,8 @@
         enable_page_level_ads: true
       });
     </script>
-
+    <script src="/js/av-min.js"></script>
+<script src="/js/Valine.min.js"></script>
 </head>
 
 <body class="loading">
@@ -101,13 +102,11 @@
         </div>
         
   <br/><br/><br/>  
-  <div id='vcomment' class="vcomment"></div>
-    <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
-    <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+  <div id='vcomment' class="vcomments"></div>
     <script>
-       console.log("here");
+       console.log("hi");
        new Valine({
-            el: '.vcomment',
+            el: '#vcomment',
             notify: true, // 邮件提醒 v1.1.4新增，下一步中有具体的邮箱设置
             verify: false,
             app_id: 'YChyJM2tU3ncVgxGmzOaoXp3-gzGzoHsz',

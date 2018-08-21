@@ -64,7 +64,7 @@
 <p><strong>ETL</strong>，是英文Extract-Transform-Load的缩写，用来描述将数据从来源端经过萃取（extract）、转置（transform）、加载（load）至目的端的过程。<strong>ETL</strong>一词较常用在<a href="https://zh.wikipedia.org/wiki/%E8%B3%87%E6%96%99%E5%80%89%E5%84%B2" target="_blank" rel="noopener">数据仓库</a>，但其对象并不限于<a href="https://zh.wikipedia.org/wiki/%E8%B3%87%E6%96%99%E5%80%89%E5%84%B2" target="_blank" rel="noopener">数据仓库</a>。</p>
 </blockquote>
 <p>有一个说法是算法科学家会花70%的时间用在数据处理上，而数据处理最琐碎的部分也是在Transform部分，而对于我们当前业务来说，这算是一种解放，因为我们对基础数据格式做了严格定义，这使得我们花费相当少量的时间去做日志清洗。通常来说，这在大公司是很难做到的。因为各个业务的标准都不一样，推动他们修改成统一的格式需要花费巨大的成本。所以一个经验是在业务初期，大数据人员就应该主动参与数据标准和规范的制定，避免把坑留到后面。</p>
-<h4 id="0x01-ETL架构"><a href="#0x01-ETL架构" class="headerlink" title="0x01 ETL架构"></a>0x01 ETL架构</h4><p>本篇文章作为大数据平台的一部分，主要讨论推荐业务大数据的ETL层是如何建立的。先放张图，</p>
+<h4 id="0x01-ETL架构"><a href="#0x01-ETL架构" class="headerlink" title="0x01 ETL架构"></a>0x01 ETL架构</h4><p>本篇文章作为大数据平台的一部分，主要讨论大数据的ETL层是如何建立的。先放张图，</p>
 <p><img src="/img/数据平台.png" alt="数据平台"></p>
 <p>0.1版本中，客户将行为日志（展示、点击、收藏等）通过POST请求上传到我们的服务器，具体来说由行为日志接收服务负责接收客户传过来的行为并进行校验后持久化到本地磁盘，在该物理机上，我们还会布置一个flume agent，用于将磁盘上的日志实时传输到HDFS集群。0.1版本的优点在于简单，但是有两个问题暴露出来：1. 由于简单，所以其可靠性极差，如果挂掉需要手工重启，另外缺乏有效的监控。2.另外在物理机资源紧张的情况下，flume agent会占用内存，会对线上服务产生影响。</p>
 <p>为了提高可靠性，从v0.2版本开始将flume-agent和action服务一起打到镜像中，部署在docker里，这样由K8S来同于管理，省去了很多手工维护的成本。将其但是随着客户越来越多，每个客户传过来的行为千差万别（比如feed流推荐传过来的是文章展示、点击、收藏、阅读时长等，视屏网站传过来的是视频播放，视频收藏，而社交推荐网站传过来的是喜欢、不喜欢等），受限于客户的技术水平，很多小客户对接接口是时间甚至要花费好几周。为了解决这个问题，v1.0版本将行为日志的上传交由sdk去完成，这样需要什么字段，全由我们自己控制，极大的降低了对接成本。</p>
@@ -100,16 +100,22 @@
             
         </div>
         
-    <div id='gitalk-container' class="comment link"
-        data-ae='true'
-        data-ci='d2fe48b53240c7f47801'
-        data-cs='c005b109fce4729b517ffa29d8f88a45195994c0'
-        data-r='marscc.github.io'
-        data-o='marscc'
-        data-a='marscc'
-        data-d='false'
-    >查看评论</div>
-
+  <br/><br/><br/>  
+  <div id='vcomment' class="vcomment"></div>
+    <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+    <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+    <script>
+       console.log("here");
+       new Valine({
+            el: '.vcomment',
+            notify: true, // 邮件提醒 v1.1.4新增，下一步中有具体的邮箱设置
+            verify: false,
+            app_id: 'YChyJM2tU3ncVgxGmzOaoXp3-gzGzoHsz',
+            app_key: '6pu05MQIG17NusspzGTK4xY3',
+            placeholder: '评论时填写邮箱仅为方便收到回复提醒，无其他用途'           
+        });
+    </script>    
+    
 
     </div>
     

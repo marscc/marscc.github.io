@@ -127,16 +127,22 @@
             
         </div>
         
-    <div id='gitalk-container' class="comment link"
-        data-ae='true'
-        data-ci='d2fe48b53240c7f47801'
-        data-cs='c005b109fce4729b517ffa29d8f88a45195994c0'
-        data-r='marscc.github.io'
-        data-o='marscc'
-        data-a='marscc'
-        data-d='false'
-    >查看评论</div>
-
+  <br/><br/><br/>  
+  <div id='vcomment' class="vcomment"></div>
+    <script src="//cdn1.lncld.net/static/js/3.0.4/av-min.js"></script>
+    <script src='//unpkg.com/valine/dist/Valine.min.js'></script>
+    <script>
+       console.log("here");
+       new Valine({
+            el: '.vcomment',
+            notify: true, // 邮件提醒 v1.1.4新增，下一步中有具体的邮箱设置
+            verify: false,
+            app_id: 'YChyJM2tU3ncVgxGmzOaoXp3-gzGzoHsz',
+            app_key: '6pu05MQIG17NusspzGTK4xY3',
+            placeholder: '评论时填写邮箱仅为方便收到回复提醒，无其他用途'           
+        });
+    </script>    
+    
 
     </div>
     

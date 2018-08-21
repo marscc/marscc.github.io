@@ -1,0 +1,172 @@
+
+<!DOCTYPE html>
+<html lang="" class="loading">
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>鲸落</title>
+
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="google" content="notranslate" />
+    <meta name="keywords" content="Marscc,"> 
+    <meta name="description" content="
+ETL，是英文Extract-Transform-Load的缩写，用来描述将数据从来源端经过萃取（extract）、转置（transform）、加载（load）至目的端的过程。ETL一词较常用在数,"> 
+    <meta name="author" content="Mars"> 
+    <link rel="alternative" href="atom.xml" title="鲸落" type="application/atom+xml"> 
+    <link rel="icon" href="/img/favicon.png"> 
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.css">
+    <link rel="stylesheet" href="/css/diaspora.css">
+    <script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
+    <script>
+      (adsbygoogle = window.adsbygoogle || []).push({
+        google_ad_client: "ca-pub-8691406134231910",
+        enable_page_level_ads: true
+      });
+    </script>
+
+</head>
+
+<body class="loading">
+    <div id="loader"></div>
+    <div id="single">
+    <div id="top" style="display: block;">
+    <div class="bar" style="width: 0;"></div>
+    <a class="icon-home image-icon" href="javascript:;"></a>
+    <div title="播放/暂停" class="icon-play"></div>
+    <h3 class="subtitle">记一次时间戳导致的flume写hdfs失败问题</h3>
+    <div class="social">
+        <!--<div class="like-icon">-->
+            <!--<a href="javascript:;" class="likeThis active"><span class="icon-like"></span><span class="count">76</span></a>-->
+        <!--</div>-->
+        <div>
+            <div class="share">
+                <a title="获取二维码" class="icon-scan" href="javascript:;"></a>
+            </div>
+            <div id="qr"></div>
+        </div>
+    </div>
+    <div class="scrollbar"></div>
+</div>
+    <div class="section">
+        <div class="article">
+    <div class='main'>
+        <h1 class="title">记一次时间戳导致的flume写hdfs失败问题</h1>
+        <div class="stuff">
+            <span>八月 21, 2018</span>
+            
+  <ul class="post-tags-list"><li class="post-tags-list-item"><a class="post-tags-list-link" href="/tags/HDFS/">HDFS</a></li><li class="post-tags-list-item"><a class="post-tags-list-link" href="/tags/flume/">flume</a></li><li class="post-tags-list-item"><a class="post-tags-list-link" href="/tags/大数据/">大数据</a></li><li class="post-tags-list-item"><a class="post-tags-list-link" href="/tags/推荐系统/">推荐系统</a></li></ul>
+
+
+        </div>
+        <div class="content markdown">
+            <h4 id="0x01-IO-Error"><a href="#0x01-IO-Error" class="headerlink" title="0x01 IO Error"></a>0x01 IO Error</h4><p>大早上被群消息@炸醒了，起床看了下消息，所有昨天的报表数据没跑出来，老板和运营同学没看到昨天的报表表示很心慌，当然我也很心慌，但还是故作镇定回了句到公司解决，然后急冲冲洗漱完出门了。</p>
+<p>到公司后看了下后台日志发现flume日志大量抛如下异常信息：<br><img src="/img/flume_error.png" alt="flume_error"></p>
+<p>报的是IO Error，看样子是写数据失败了，之前没遇到过，Google下先（面向Google编程，哈哈～～），发现了有很多答案都提到一个配置<strong>dfs.datanode.max.xcievers</strong>，增大它的大小，于是尝试加到8092重启发现问题依旧，这时开始思考这个参数代表的意义，再次Google这个参数，其含义是datanode上进行数据传输时，最多能同时开启的连接数，一旦超过这个设置，datanode就会拒绝连接。并且<strong>hdfs dfsafmin -report</strong>就能实时显示其大小，当时每台datanode已超过8000连接数，而最大值是8192，算是定位到是什么因素其写入失败。但到底是什么影响其建了如此多的连接且没有释放呢。思考许久，突然想起时间戳有可能会导致这个问题，因为Flume将Kafka的消息写入到hdfs，hdfs上是按小时级分割存放。此时时间是按客户端时间戳，其配置如下:</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line">agent.sources.kafkaSource.interceptors = i1 i2 i3 i4 i5 i6</span><br><span class="line">agent.sources.kafkaSource.interceptors.i1.type = regex_extractor</span><br><span class="line"># 问题出在提取的时间戳actionTime上</span><br><span class="line">agent.sources.kafkaSource.interceptors.i1.regex = \"actionTime\":(\\d+)</span><br><span class="line">agent.sources.kafkaSource.interceptors.i1.serializers = s1</span><br><span class="line">agent.sources.kafkaSource.interceptors.i1.serializers.s1.name = timestamp</span><br><span class="line">agent.sources.kafkaSource.interceptors.i2.type = regex_extractor</span><br><span class="line">agent.sources.kafkaSource.interceptors.i2.regex = \"businessId\":\"(.+?)\"</span><br><span class="line">agent.sources.kafkaSource.interceptors.i2.serializers = s2</span><br><span class="line">agent.sources.kafkaSource.interceptors.i2.serializers.s2.name = customName</span><br><span class="line">agent.sources.kafkaSource.interceptors.i3.type = regex_extractor</span><br><span class="line">agent.sources.kafkaSource.interceptors.i3.regex = \"sceneId\":\"(.+?)\"</span><br><span class="line">agent.sources.kafkaSource.interceptors.i3.serializers = s3</span><br><span class="line">agent.sources.kafkaSource.interceptors.i3.serializers.s3.name = sceneId</span><br><span class="line">agent.sources.kafkaSource.interceptors.i4.type = regex_extractor</span><br><span class="line">agent.sources.kafkaSource.interceptors.i4.regex = \"serviceName\":\"(.+?)\"</span><br><span class="line">agent.sources.kafkaSource.interceptors.i4.serializers = s4</span><br><span class="line">agent.sources.kafkaSource.interceptors.i4.serializers.s4.name = serviceName</span><br><span class="line">agent.sources.kafkaSource.interceptors.i5.type = regex_extractor</span><br><span class="line">agent.sources.kafkaSource.interceptors.i5.regex = \"logType\":\"(.+?)\"</span><br><span class="line">agent.sources.kafkaSource.interceptors.i5.serializers = s5</span><br><span class="line">agent.sources.kafkaSource.interceptors.i5.serializers.s5.name = logType</span><br><span class="line">agent.sources.kafkaSource.interceptors.i6.type = regex_extractor</span><br><span class="line">agent.sources.kafkaSource.interceptors.i6.regex = \"itemSetId\":\"(.+?)\"</span><br><span class="line">agent.sources.kafkaSource.interceptors.i6.serializers = s6</span><br><span class="line">agent.sources.kafkaSource.interceptors.i6.serializers.s6.name = itemSetId</span><br><span class="line">agent.sinks.hdfs01.type = hdfs</span><br><span class="line">agent.sinks.hdfs01.hdfs.path = hdfs://m1:8020/recom/log/%&#123;customName&#125;/%&#123;sceneId&#125;/%&#123;serviceName&#125;/%&#123;logType&#125;/%Y%m%d</span><br></pre></td></tr></table></figure>
+<p>问题有可能出在actionTime上，因为actionTime是客户端时间，而客户端时间有可能被用户篡改或者时区不对。为了验证这个问题，我们取了一下flume最终存档hdfs的数据（截图时间是7月11号）：</p>
+<p><img src="/img/WechatIMG1184.jpeg" alt="WechatIMG1184"></p>
+<p>我们发现了有比7月11号日期更超前的日志产生，就是这个问题了。重新在复现下，我们只启动了6个flume消费Kafka的混入错误时间戳的日志，此时的连接数已高达4千多（下图中的xrecivers）：</p>
+<p><img src="/img/image2018-8-8_15-41-0.png" alt="image2018-8-8_15-41-0"></p>
+<p>flume为什么因为带错误时间戳的日志而产生如此多的连接呢？</p>
+<p>整理了一下整个过程，大体是这样，当一个小时内的时间戳错误的日志量（此时指处于不同小时的日志）超过一定量时（流量上来之后很容易发生），Flume会同时产生着么多量的到hdfs的socket连接，这些连接在1小时内不会释放（flume设置的日志轮转时间为1小时），而犹豫hdfs本身需要副本同步机制（设置的replica=2）导致这些机器也会生成同样数目的连接到其他datanode上，所以观察到的现象每台datanode上都有超高的连接数。</p>
+<h4 id="0x02-解决之道"><a href="#0x02-解决之道" class="headerlink" title="0x02 解决之道"></a>0x02 解决之道</h4><p>明白了问题之后，其实很容易解决，即将客户端时间换成服务端时间即可，改完后启动10个flume连接数才占8百多</p>
+<p><img src="/img/image2018-8-8_15-46-6.png" alt="image2018-8-8_15-46-6"></p>
+<p>其实之前知道使用客户端时间会产生些问题，但按我的经验，日志时间出问题的分布是：客户端时间出问题的概率是20%，网络出错日志延迟发送的概率是80%。所以就采用了actionTime,  没想到真正造成毁灭性影响的是这20%。“墨菲定律”和“蝴蝶效应”再一次验证，希望以此为鉴。</p>
+<h4 id="0x03-优化"><a href="#0x03-优化" class="headerlink" title="0x03 优化"></a>0x03 优化</h4><p>再flume做高可用架构之前，我们用最简单的办法对ETL部分做了下改善。</p>
+<p>按1亿日PV来算的话，QPS大概在3000左右，峰值QPS在5000左右。</p>
+<p>首先不再按新客户分配Kafka topic的方式，我们将Kafka topic限定在12个，将所有客户下的所有用户的请求按userID取模后打到不同的Topic上，这样的好处是给写操作做了负载均衡，结果是每个topic能扛住平均5000/12不到500的QPS，对于Kafka来说完全没有问题，另外部署三个flume去消费这12个Topic的数据，每个flume承载4个Kafka topic的数据，这样做的目的是为了方便扩展，当flume这出现瓶颈时很容易去横向扩展。下图示例了如何给flume做横向扩展（为了简化，图中的Kafka topic数取6）</p>
+<p><img src="/img/collect.png" alt="collect"></p>
+<h4 id="0x04-总结"><a href="#0x04-总结" class="headerlink" title="0x04 总结"></a>0x04 总结</h4><ol>
+<li>不要相信客户端</li>
+<li>了解每个组件单节点资源的上限，并对可预见的流量做好资源分配。</li>
+</ol>
+
+            <!--[if lt IE 9]><script>document.createElement('audio');</script><![endif]-->
+            <audio id="audio" loop="1" preload="auto" controls="controls" data-autoplay="false">
+                <source type="audio/mpeg" src="http://domain.com/awesome.mp3">
+            </audio>
+            
+        </div>
+        
+    <div id='gitalk-container' class="comment link"
+        data-ae='true'
+        data-ci='d2fe48b53240c7f47801'
+        data-cs='c005b109fce4729b517ffa29d8f88a45195994c0'
+        data-r='marscc.github.io'
+        data-o='marscc'
+        data-a='marscc'
+        data-d='false'
+    >查看评论</div>
+
+
+    </div>
+    
+</div>
+
+
+    </div>
+</div>
+</body>
+<script src="//cdn.jsdelivr.net/npm/gitalk@1/dist/gitalk.min.js"></script>
+<script src="//lib.baomitu.com/jquery/1.8.3/jquery.min.js"></script>
+<script src="/js/plugin.js"></script>
+<script src="/js/diaspora.js"></script>
+<link rel="stylesheet" href="/photoswipe/photoswipe.css">
+<link rel="stylesheet" href="/photoswipe/default-skin/default-skin.css">
+<script src="/photoswipe/photoswipe.min.js"></script>
+<script src="/photoswipe/photoswipe-ui-default.min.js"></script>
+
+<!-- Root element of PhotoSwipe. Must have class pswp. -->
+<div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+    <!-- Background of PhotoSwipe. 
+         It's a separate element as animating opacity is faster than rgba(). -->
+    <div class="pswp__bg"></div>
+    <!-- Slides wrapper with overflow:hidden. -->
+    <div class="pswp__scroll-wrap">
+        <!-- Container that holds slides. 
+            PhotoSwipe keeps only 3 of them in the DOM to save memory.
+            Don't modify these 3 pswp__item elements, data is added later on. -->
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+        <!-- Default (PhotoSwipeUI_Default) interface on top of sliding area. Can be changed. -->
+        <div class="pswp__ui pswp__ui--hidden">
+            <div class="pswp__top-bar">
+                <!--  Controls are self-explanatory. Order can be changed. -->
+                <div class="pswp__counter"></div>
+                <button class="pswp__button pswp__button--close" title="Close (Esc)"></button>
+                <button class="pswp__button pswp__button--share" title="Share"></button>
+                <button class="pswp__button pswp__button--fs" title="Toggle fullscreen"></button>
+                <button class="pswp__button pswp__button--zoom" title="Zoom in/out"></button>
+                <!-- Preloader demo http://codepen.io/dimsemenov/pen/yyBWoR -->
+                <!-- element will get class pswp__preloader--active when preloader is running -->
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                      <div class="pswp__preloader__cut">
+                        <div class="pswp__preloader__donut"></div>
+                      </div>
+                    </div>
+                </div>
+            </div>
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div> 
+            </div>
+            <button class="pswp__button pswp__button--arrow--left" title="Previous (arrow left)">
+            </button>
+            <button class="pswp__button pswp__button--arrow--right" title="Next (arrow right)">
+            </button>
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+</html>

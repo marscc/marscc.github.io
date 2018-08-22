@@ -467,7 +467,7 @@ $(function() {
                 break;
               // comment
             case - 1 != tag.indexOf("comment"): 
-                console.log("comment");
+                console.log(window.location.pathname);
                 Diaspora.loading(),
                 comment = $('#vcomment');
                 // gitalk = new Gitalk({

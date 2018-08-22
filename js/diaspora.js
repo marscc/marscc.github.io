@@ -468,6 +468,7 @@ $(function() {
               // comment
             case - 1 != tag.indexOf("comment"): 
                 console.log(window.location.pathname);
+                var path = window.location.pathname;
                 Diaspora.loading(),
                 comment = $('#vcomment');
                 // gitalk = new Gitalk({
@@ -485,7 +486,7 @@ $(function() {
                     appKey: '6pu05MQIG17NusspzGTK4xY3',
                     placeholder: '快来加入评论吧~ (≧∇≦)ﾉ',
                     avatar: 'monsterid',
-                    path: window.location.pathname
+                    path: path
                   });
                 $(".comment").removeClass("link")
                 // gitalk.render('gitalk-container')

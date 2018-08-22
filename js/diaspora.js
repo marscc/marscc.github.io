@@ -99,10 +99,8 @@ var Diaspora = {
             setTimeout(function() {
                 Diaspora.player();
                 $('#top').show();
-                comment = $("#gitalk-container");
-                if (comment.data('ae') == true){
-                    comment.click();
-                }
+                comment = $("#vcomment");
+                console.log(comment);
             }, 0)
         })
     },
@@ -303,10 +301,11 @@ $(function() {
         }
     })
     $('body').on('click', function(e) {
+        console.log("in");
+        console.log(tag.indexOf('switchmenu'));
         var tag = $(e.target).attr('class') || '',
             rel = $(e.target).attr('rel') || '';
         // .content > p > img
-        console.log("clicked");
         if (e.target.nodeName == "IMG" && $(e.target).parent().get(0).nodeName == "P") {
             tag = 'pimg';
         }
@@ -465,8 +464,9 @@ $(function() {
                 break;
               // comment
             case - 1 != tag.indexOf("comment"): 
+                console.log("in");
                 Diaspora.loading(),
-                comment = $('#gitalk-container');
+                comment = $('#vcomment');
                 gitalk = new Gitalk({
                   clientID: comment.data('ci'),
                   clientSecret: comment.data('cs'),
@@ -476,8 +476,8 @@ $(function() {
                   id: location.pathname,
                   distractionFreeMode: comment.data('d')
                 })
-                $(".comment").removeClass("link")
-                gitalk.render('gitalk-container')
+                $(".vcomments").removeClass("link")
+                gitalk.render('vcomment')
                 Diaspora.loaded();
                 return false;
                 break;
@@ -487,7 +487,7 @@ $(function() {
         }
     })
     // 是否自动展开评论
-    comment = $("#gitalk-container");
+    comment = $("#vcomment");
     if (comment.data('ae') == true){
         comment.click();
     }

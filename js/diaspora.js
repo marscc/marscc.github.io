@@ -301,8 +301,6 @@ $(function() {
         }
     })
     $('body').on('click', function(e) {
-        console.log("in");
-        console.log(tag.indexOf('switchmenu'));
         var tag = $(e.target).attr('class') || '',
             rel = $(e.target).attr('rel') || '';
         // .content > p > img

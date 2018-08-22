@@ -485,7 +485,7 @@ $(function() {
                     appKey: '6pu05MQIG17NusspzGTK4xY3',
                     placeholder: '快来加入评论吧~ (≧∇≦)ﾉ',
                     avatar: 'monsterid',
-                    path: 'window.location.pathname'
+                    path: window.location.pathname
                   });
                 $(".comment").removeClass("link")
                 // gitalk.render('gitalk-container')

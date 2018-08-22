@@ -303,8 +303,11 @@ $(function() {
         }
     })
     $('body').on('click', function(e) {
+        console.log("clicked")
         var tag = $(e.target).attr('class') || '',
             rel = $(e.target).attr('rel') || '';
+        console.log(tag);
+        console.log(tag.indexOf("comment"));
         // .content > p > img
         if (e.target.nodeName == "IMG" && $(e.target).parent().get(0).nodeName == "P") {
             tag = 'pimg';
@@ -464,19 +467,27 @@ $(function() {
                 break;
               // comment
             case - 1 != tag.indexOf("comment"): 
+                console.log("comment");
                 Diaspora.loading(),
-                comment = $('#gitalk-container');
-                gitalk = new Gitalk({
-                  clientID: comment.data('ci'),
-                  clientSecret: comment.data('cs'),
-                  repo: comment.data('r'),
-                  owner: comment.data('o'),
-                  admin: comment.data('a'),
-                  id: location.pathname,
-                  distractionFreeMode: comment.data('d')
-                })
+                comment = $('#vcomment');
+                // gitalk = new Gitalk({
+                //   clientID: comment.data('ci'),
+                //   clientSecret: comment.data('cs'),
+                //   repo: comment.data('r'),
+                //   owner: comment.data('o'),
+                //   admin: comment.data('a'),
+                //   id: location.pathname,
+                //   distractionFreeMode: comment.data('d')
+                // })
+                new Valine({
+                    el: '#vcomment',
+                    appId: 'YChyJM2tU3ncVgxGmzOaoXp3-gzGzoHsz',
+                    appKey: '6pu05MQIG17NusspzGTK4xY3',
+                    placeholder: '快来加入评论吧~ (≧∇≦)ﾉ',
+                    avatar:'monsterid'
+                  });
                 $(".comment").removeClass("link")
-                gitalk.render('gitalk-container')
+                // gitalk.render('gitalk-container')
                 Diaspora.loaded();
                 return false;
                 break;
@@ -486,10 +497,10 @@ $(function() {
         }
     })
     // 是否自动展开评论
-    comment = $("#gitalk-container");
-    if (comment.data('ae') == true){
-        comment.click();
-    }
-    console.log("%c Github %c","background:#24272A; color:#ffffff","","https://github.com/Fechin/hexo-theme-diaspora")
+    // comment = $("#vcomment");
+    // if (comment.data('ae') == true){
+    //     comment.click();
+    // }
+    // console.log("%c Github %c","background:#24272A; color:#ffffff","","https://github.com/Fechin/hexo-theme-diaspora")
 })
 

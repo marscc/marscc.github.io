@@ -306,7 +306,6 @@ $(function() {
         var tag = $(e.target).attr('class') || '',
             rel = $(e.target).attr('rel') || '';
         // .content > p > img
-        console.log("clicked");
         if (e.target.nodeName == "IMG" && $(e.target).parent().get(0).nodeName == "P") {
             tag = 'pimg';
         }
